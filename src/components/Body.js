@@ -1,8 +1,9 @@
 import useOnlineStatus from "../utils/useOnlineStatus";
-import RestaurantCard from "./RestaurantCard";
+import RestaurantCard, { withPromotedLabel } from "./RestaurantCard";
 import Shimmer from "./Shimmer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
+import UserContext from "../utils/UserContext";
 
 const Body = () => {
   // Local State Variables - Super Powerful Variable
@@ -10,7 +11,10 @@ const Body = () => {
   const [filteredRestaurant, setFilteredRestaurant] = useState([]);
 
   const [searchText, setSearchText] = useState("");
-  console.log(searchText);
+
+  const RestaurantCardPromoted = withPromotedLabel(RestaurantCard);
+
+  const { loggedInUser, setUserName } = useContext(UserContext);
 
   useEffect(() => {
     fetchData();
@@ -22,8 +26,11 @@ const Body = () => {
     );
     const json = await data.json();
 
-    console.log(json);
-
+    console.log("json", json);
+    console.log(
+      "list ",
+      json?.data?.cards[4]?.card?.card?.gridElements?.infoWithStyle?.restaurants
+    );
     // Optional Chaining
     setListOfRestaurants(
       json?.data?.cards[4]?.card?.card?.gridElements?.infoWithStyle?.restaurants
@@ -56,6 +63,7 @@ const Body = () => {
   }
 
   // conditional rendering
+  console.log("listOfRestaurants ->", listOfRestaurants);
   return listOfRestaurants.length === 0 ? (
     <Shimmer />
   ) : (
@@ -87,11 +95,24 @@ const Body = () => {
             Top Rated Restaurants
           </button>
         </div>
+        <div className="search m-4 p-4 flex items-center">
+          <label>User Name :- </label>
+          <input
+            className="border border-black px-2"
+            value={loggedInUser}
+            onChange={(e) => setUserName(e.target.value)}
+          ></input>
+        </div>
       </div>
       <div className="flex flex-wrap">
         {filteredRestaurant.map((item) => (
           <Link key={item.info.id} to={"/restaurants/" + item.info.id}>
-            <RestaurantCard resData={item} />
+            {/** if the restaurant s promoted then add a promoted label to it */}
+            {item.info.promoted ? (
+              <RestaurantCardPromoted resData={item} />
+            ) : (
+              <RestaurantCard resData={item} />
+            )}
           </Link>
         ))}
       </div>
